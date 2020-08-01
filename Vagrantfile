@@ -7,42 +7,56 @@
   end
 end
 
-DISTRO ||= "centos"
-NODE_SETTINGS ||= {
+NODES ||= {
   master: {
-    count: 1,
     cpus: 2,
-    memory: 2048
+    memory: 2048,
+    ip: 10
   },
   worker: {
-    count: 2
+    count: 2,
     cpus: 1,
-    memory: 1024
+    memory: 1024,
+    ip: 20
   }
 }
 
 Vagrant.configure("2") do |config|
+  config.vm.box = "bento/centos-7"
+
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = false
+
+  config.vm.synced_folder ".", "/home/vagrant/sync"
+
   config.vm.define "master" do |master|
-    master.vm.box_download_insecure = true
-    master.vm.box = "bento/centos-7"
-    master.vm.network "private_network", ip: "100.0.0.10"
+    # master.vm.box_download_insecure = true
     master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "100.0.1.#{NODES[:master][:ip]}"
     master.vm.provider "virtualbox" do |v|
-      v.name = "master"
-      v.memory = 2048
-      v.cpus = 2
+      v.cpus = NODES[:master][:cpus]
+      v.memory = NODES[:master][:memory]
+    end
+
+    master.vm.provision :shell, :path => "scripts/bootstrap.sh"
+    master.vm.provision :shell, :path => "scripts/master.sh", :args => "100.0.1.#{NODES[:master][:ip]}", privileged: false
+  end
+
+  (1..NODES[:worker][:count]).each do |i|
+    hostname = "%s-%02d" % ["worker", i]
+
+    config.vm.define "#{hostname}" do |worker|
+      worker.vm.hostname = "#{hostname}"
+      # worker.vm.box_download_insecure = true
+      worker.vm.network "private_network", ip: "100.0.1.#{NODES[:worker][:ip] + i}"
+      worker.vm.provider "virtualbox" do |v|
+        v.cpus = NODES[:worker][:cpus]
+        v.memory = NODES[:worker][:memory]        
+      end
+
+      worker.vm.provision :shell, :path => "scripts/bootstrap.sh"
+      worker.vm.provision :shell, :path => "scripts/worker.sh"
     end
   end
 
-  config.vm.define "worker" do |worker|
-    worker.vm.box_download_insecure = true
-    worker.vm.box = "bento/centos-7"
-    worker.vm.network "private_network", ip: "100.0.0.20"
-    worker.vm.hostname = "worker"
-    worker.vm.provider "virtualbox" do |v|
-      v.name = "worker"
-      v.memory = 1024
-      v.cpus = 1
-    end
-  end
 end

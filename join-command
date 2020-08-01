@@ -1,0 +1,1 @@
+kubeadm join 100.0.1.10:6443 --token 7kygmx.tdgnavgpm8bj8c6k     --discovery-token-ca-cert-hash sha256:8f3d9be8263ad9d12de53ca701c4486176b2a6abef17b3e992cd401994d82207 
