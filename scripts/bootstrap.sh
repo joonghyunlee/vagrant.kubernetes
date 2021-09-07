@@ -32,8 +32,9 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kube*
 EOF
 
-yum install -y kubeadm kubelet kubectl
+yum install -y kubeadm-1.19.14-0.x86_64 kubelet-1.19.14-0.x86_64 kubectl-1.19.14-0.x86_64 --disableexcludes=kubernetes
 
 systemctl enable kubelet
